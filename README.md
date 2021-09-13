@@ -97,14 +97,6 @@ chaincode:
 ```
 4.Start the fabric network and deploy chaincodes.
 
-About The Experiment Data
-----------
-Firstly, we test the execution time of every step in PQ-KES4Chain (except the second step because different developer may store their secret data off-chain and read the data in different ways) based on all the different post-quantum KEM algorithms in the NIST call. To provide enough security level, the length of pre-negotiated AES session key SK between sender/receiver peers is set to 256 bits, whereas the length of the secret data M is set to the input block length (i.e., 16 bytes) of AES algorithm.
-
-We record all the execution time available in the experiment data, and highlight the consumed time of one key pair generation, one encapsulation operation and one decapsulation operation of each post-quantum KEM algorithm in boldface.
-
-A full list of the on-chain storage space sizes can also be found in the experiment data, and we highlight the needed on-chain space of two ciphertexts, two public keys and two shared secrets of each post-quantum KEM algorithm in boldface.
-
 References
 ----------
 [1] Liboqs, https://github.com/open-quantum-safe/liboqs
