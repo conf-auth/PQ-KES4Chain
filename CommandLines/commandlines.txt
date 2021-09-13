@@ -1,0 +1,103 @@
+1. ESCROWER: generate pk sk  MAKE REPORT
+--------------------------------------------------------------------
+1.1 escrower1 generates public and private keys
+note: escrower1 generate the public key and put it on the blockchain, and return the private key, the returned private key will be used in step 4.1
+--------------------------------------------------------------------
+export FABRIC_CFG_PATH=$PWD/peer0
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org0MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org0.example.com/peers/peer0.org0.example.com/tls/ca.crt
+export CORE_PEER_ADDRESS=localhost:7001
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org0.example.com/users/Admin@org0.example.com/msp
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Escrow -c '{"Args":["Gen_EA_KeyPair","EsPublicKey01", "FrodoKEM-640-AES"]}'
+
+ 
+------------------------------------------------------------
+1.2 escrower2 generates public and private keys
+note: escrower2 generate the public key and put it on the blockchain, and return the private key, the returned private key will be used in step 4.2
+--------------------------------------------------------------------
+export FABRIC_CFG_PATH=$PWD/peer2
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org2MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
+export CORE_PEER_ADDRESS=localhost:9051
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Escrow -c '{"Args":["Gen_EA_KeyPair","EsPublicKey02", "FrodoKEM-640-AES"]}' 
+
+--------------------------------------------------------------------
+
+
+2.Sender generate ciphertext
+------------------------------------------------------------------------
+note: ks is the key in the AES algorithm
+------------------------------------------------------------------------
+export FABRIC_CFG_PATH=$PWD/peer1
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org1MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+export CORE_PEER_ADDRESS=localhost:7051
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+export message=$(echo -n "Hello world 1111" | base64 | tr -d \\n)
+export ks=Pl7mgVkX73EtPc1dOso4gdrc82fPCZunnzgyYxPF8Tw=
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Sender -c '{"Args":["Gen_Sender_Data", "send001","EsPublicKey01","EsPublicKey02", "FrodoKEM-640-AES"]}' --transient "{\"MESSAGE\":\"$message\", \"KS\":\"$ks\"}"
+-----------------------------------------------------------------------------------
+
+
+
+
+3.Receiver  decrypt the message
+-------		-----------------------------------------------------------------------
+export FABRIC_CFG_PATH=$PWD/peer1Org1
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org1MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp
+export CORE_PEER_ADDRESS=localhost:7061
+export ks=Pl7mgVkX73EtPc1dOso4gdrc82fPCZunnzgyYxPF8Tw=
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Receiver -c '{"Args":["Dec_Sec_Data","send001"]}' --transient "{\"KS\":\"$ks\"}"
+
+
+
+4.escrow decrypt the ks1 ks2
+------------------------------------------------------------------------------
+4.1 escrower1 decrypt shared secret key SS1
+note: The private key comes from the data returned in step 1“ESCROWER: generate pk sk  MAKE REPORT”
+------------------------------------------------------------------------------
+
+export FABRIC_CFG_PATH=$PWD/peer0
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org0MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org0.example.com/peers/peer0.org0.example.com/tls/ca.crt
+export CORE_PEER_ADDRESS=localhost:7001
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org0.example.com/users/Admin@org0.example.com/msp
+export privatekey= “input thedata returned in step 1.1”
+
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Escrow -c '{"Args":["Decap_Shared_Sec","send001", "EsSharedSecret01", "1", "FrodoKEM-640-AES", "PrivateKey1Collection"]}' --transient "{\"PRIVATEKEY\":\"$privatekey\"}" 
+
+--------------------------------------------------------------------------------
+4.2 escrower2 decrypt shared secret key SS2
+note: The private key comes from the data returned in step 1“ESCROWER: generate pk sk  MAKE REPORT”
+--------------------------------------------------------------------------------
+
+export FABRIC_CFG_PATH=$PWD/peer2
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org2MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
+export CORE_PEER_ADDRESS=localhost:9051
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
+export privatekey=“input thedata returned in step 1.2"
+
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Escrow -c '{"Args":["Decap_Shared_Sec","send001", "EsSharedSecret02", "2", "FrodoKEM-640-AES", "PrivateKey2Collection"]}' --transient "{\"PRIVATEKEY\":\"$privatekey\"}"   
+-----------------------------------------------------------------------------------
+
+
+5. Listener decrypt the message
+-----------------------------------------------------------------------------------
+export FABRIC_CFG_PATH=$PWD/peer0org3
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID="Org3MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
+export CORE_PEER_ADDRESS=localhost:6051
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/go/src/github.com/hyperledger/fabric/scripts/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n Escrow -c '{"Args":["Dec_Sec_Data", "send001", "EsSharedSecret01", "EsSharedSecret02", "PrivateKey1Collection", "PrivateKey2Collection"]}'
+
